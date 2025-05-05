@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block title %}Gerenciar Usuários - utili&tal{% endblock %}
+
+{% block content %}
+    <h1>Gerenciar Usuários</h1>
+
+    <div style="margin-bottom: 1rem;">
+        <a href="{{ url_for("tasks.create_user") }}" class="button" style="background-color: var(--cor-primaria); color: white; padding: 0.5rem 1rem; text-decoration: none; border-radius: 4px;">Criar Novo Usuário</a>
+    </div>
+
+    {% if users %}
+        <table style="width: 100%; border-collapse: collapse;">
+            <thead>
+                <tr style="background-color: var(--cor-secundaria); color: white;">
+                    <th style="padding: 0.75rem; text-align: left;">Nome</th>
+                    <th style="padding: 0.75rem; text-align: left;">E-mail</th>
+                    <th style="padding: 0.75rem; text-align: left;">Nível de Acesso</th>
+                    <th style="padding: 0.75rem; text-align: left;">Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                    <tr style="border-bottom: 1px solid #ddd; background-color: {% if loop.index % 2 == 0 %}#f2f2f2{% else %}white{% endif %};">
+                        <td style="padding: 0.75rem;">{{ user.nome }}</td>
+                        <td style="padding: 0.75rem;">{{ user.email }}</td>
+                        <td style="padding: 0.75rem;">{{ user.nivel_acesso.capitalize() }}</td>
+                        <td style="padding: 0.75rem;">
+                            <a href="{{ url_for("tasks.edit_user", id=user.id) }}" class="button button-secondary" style="margin-right: 5px;">Editar</a>
+                            {% if user.id != current_user.id %}{# Não permitir excluir a si mesmo #}
+                            <form action="{{ url_for("tasks.delete_user", id=user.id) }}" method="POST" style="display: inline;" onsubmit="return confirm("Tem certeza que deseja excluir este usuário? Esta ação não pode ser desfeita.");">
+                                <button type="submit" class="button" style="background-color: var(--cor-primaria);">Excluir</button>
+                            </form>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>Nenhum usuário cadastrado.</p>
+    {% endif %}
+{% endblock %}

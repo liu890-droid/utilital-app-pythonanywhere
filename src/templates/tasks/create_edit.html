@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% set is_edit = task is defined %}
+{% block title %}{{ "Editar" if is_edit else "Criar" }} Tarefa - utili&tal{% endblock %}
+
+{% block content %}
+    <h1>{{ "Editar" if is_edit else "Criar" }} Tarefa</h1>
+
+    <form method="POST" action="{{ url_for("tasks.edit_task", id=task.id) if is_edit else url_for("tasks.create_task") }}">
+        <div>
+            <label for="titulo">Assunto:</label>
+            <input type="text" id="titulo" name="titulo" value="{{ task.titulo if is_edit else '' }}" required>
+        </div>
+        <div>
+            <label for="descricao">Descrição:</label>
+            <textarea id="descricao" name="descricao" rows="4">{{ task.descricao if is_edit else "" }}</textarea>
+        </div>
+        <div>
+            <label for="executor_id">Solicitado:</label>
+            <select id="executor_id" name="executor_id" required>
+                <option value="">Selecione...</option>
+                {% for user in executores %}
+                    <option value="{{ user.id }}" {% if is_edit and task.executor_id == user.id %}selected{% endif %}>{{ user.nome }} ({{ user.email }})</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <label for="tipo_id">Tipo de Tarefa:</label>
+            <select id="tipo_id" name="tipo_id" required>
+                 <option value="">Selecione...</option>
+                {% for tipo in tipos_tarefa %}
+                    <option value="{{ tipo.id }}" {% if is_edit and task.tipo_id == tipo.id %}selected{% endif %}>{{ tipo.nome }} (Prazo: {{ tipo.prazo_dias }} dias)</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        {# Campo data_previsao removido - será calculado automaticamente #}
+        {# Campos adicionais visíveis apenas na edição (se necessário) #}
+        {% if is_edit %}
+            <p>Status Atual: {{ task.status.nome }}</p>
+            <p>Data Prevista: {{ task.data_prevista_conclusao.strftime("%d/%m/%Y") }}</p>
+        {% endif %}
+
+        <div>
+            <button type="submit">{{ "Salvar Alterações" if is_edit else "Criar Tarefa" }}</button>
+            <a href="{{ url_for("tasks.list_tasks") }}" class="button button-secondary" style="margin-left: 1rem; background-color: #6c757d; color: white; padding: 0.75rem 1.5rem; text-decoration: none; border-radius: 4px;">Cancelar</a>
+        </div>
+    </form>
+{% endblock %}
+

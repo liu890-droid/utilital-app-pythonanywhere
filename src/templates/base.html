@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}utili&tal Tarefas{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for("static", filename="css/style.css") }}">
+    <!-- Adicionar ícone para o botão hamburger (ex: Font Awesome) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <a href="{{ url_for("main.index") }}">
+                <img src="{{ url_for("static", filename="images/utilietal_logo.jpg") }}" alt="utili&tal Logo">
+            </a>
+        </div>
+        <button class="nav-toggle" aria-label="toggle navigation">
+            <i class="fas fa-bars"></i>
+        </button>
+        <nav class="nav">
+            <ul>
+                {% if current_user.is_authenticated %}
+                    <li><a href="{{ url_for("main.index") }}">Painel</a></li>
+                    <li><a href="{{ url_for("tasks.list_tasks") }}">Tarefas</a></li>
+                    {% if current_user.nivel_acesso in ["administrador", "gestor"] %}
+                        <li><a href="{{ url_for("tasks.list_types") }}">Tipos Tarefa</a></li>
+                    {% endif %}
+                    {% if current_user.nivel_acesso == "administrador" %}
+                        <li><a href="{{ url_for("tasks.list_users") }}">Usuários</a></li>
+                        {# Adicionar link para gerenciamento de status se implementado #}
+                    {% endif %}
+                    <li>
+                        <a href="{{ url_for("notifications.list_notifications") }}">
+                            Notificações <span id="notification-count" class="badge"></span>
+                        </a>
+                    </li>
+                    <li><a href="#">Perfil ({{ current_user.nome }})</a></li> {# Link de perfil a ser implementado #}
+                    <li><a href="{{ url_for("auth.logout") }}">Sair</a></li>
+                {% else %}
+                    <li><a href="{{ url_for("auth.login") }}">Login</a></li>
+                {% endif %}
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <ul class="flash-messages">
+                {% for category, message in messages %}
+                    <li class="{{ category }}">{{ message }}</li>
+                {% endfor %}
+                </ul>
+            {% endif %}
+        {% endwith %}
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer>
+        <p>&copy; 2025 utili&tal - Sistema de Gestão de Tarefas</p>
+    </footer>
+
+    <!-- Adicionar JS -->
+    <script src="{{ url_for("static", filename="js/notifications.js") }}"></script>
+    <script>
+        // Script para o menu hamburger
+        const navToggle = document.querySelector(".nav-toggle");
+        const nav = document.querySelector(".nav");
+
+        navToggle.addEventListener("click", () => {
+            nav.classList.toggle("nav--visible");
+        });
+    </script>
+</body>
+</html>
+

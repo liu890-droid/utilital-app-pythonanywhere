@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block title %}Lista de Tarefas - utili&tal{% endblock %}
+
+{% block content %}
+    <h1>Lista de Tarefas</h1>
+
+    <div class="task-controls" style="margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;">
+        {% if current_user.nivel_acesso in ["administrador", "gestor"] %}
+            <a href="{{ url_for("tasks.create_task") }}" class="button" style="background-color: var(--cor-primaria); color: white; padding: 0.5rem 1rem; text-decoration: none; border-radius: 4px;">Criar Nova Tarefa</a>
+        {% endif %}
+
+        {# Filtros #}
+        <form method="GET" action="{{ url_for("tasks.list_tasks") }}" style="display: inline-block; padding: 0; background: none; box-shadow: none;">
+            <label for="status_filter">Filtrar por Status:</label>
+            <select name="status" id="status_filter" onchange="this.form.submit()">
+                <option value="">Todos</option>
+                {% for s in all_status %}
+                    <option value="{{ s.nome }}" {% if request.args.get("status") == s.nome %}selected{% endif %}>{{ s.nome }}</option>
+                {% endfor %}
+            </select>
+            {# Adicionar mais filtros se necessário (usuário, tipo, etc.) #}
+        </form>
+    </div>
+
+    {% if tarefas %}
+        <table style="width: 100%; border-collapse: collapse;">
+            <thead>
+                <tr style="background-color: var(--cor-secundaria); color: white;">
+                    <th style="padding: 0.75rem; text-align: left;">Assunto</th>
+                    <th style="padding: 0.75rem; text-align: left;">Status</th>
+                    <th style="padding: 0.75rem; text-align: left;">Solicitado</th>
+                    {% if current_user.nivel_acesso != "executor" %}
+                        <th style="padding: 0.75rem; text-align: left;">Solicitante</th>
+                    {% endif %}
+                    <th style="padding: 0.75rem; text-align: left;">Tipo</th>
+                    <th style="padding: 0.75rem; text-align: left;">Prev. Conclusão</th>
+                    <th style="padding: 0.75rem; text-align: left;">Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for tarefa in tarefas %}
+                    <tr style="border-bottom: 1px solid #ddd; background-color: {% if loop.index % 2 == 0 %}#f2f2f2{% else %}white{% endif %};">
+                        <td style="padding: 0.75rem;"><a href="{{ url_for("tasks.view_task", id=tarefa.id) }}">{{ tarefa.titulo }}</a></td>
+                        <td style="padding: 0.75rem;">{{ tarefa.status.nome }}</td>
+                        <td style="padding: 0.75rem;">{{ tarefa.executor.nome }}</td>
+                         {% if current_user.nivel_acesso != "executor" %}
+                            <td style="padding: 0.75rem;">{{ tarefa.solicitante.nome }}</td>
+                        {% endif %}
+                        <td style="padding: 0.75rem;">{{ tarefa.tipo.nome }}</td>
+                        <td style="padding: 0.75rem;">{{ tarefa.data_previsao.strftime("%d/%m/%Y") }}</td>
+                        <td style="padding: 0.75rem;">
+                            <a href="{{ url_for("tasks.view_task", id=tarefa.id) }}" style="margin-right: 5px;">Ver</a>
+                            {% if current_user.nivel_acesso in ["administrador", "gestor"] and (current_user.id == tarefa.solicitante_id or current_user.nivel_acesso == "administrador") %}
+                                <a href="{{ url_for("tasks.edit_task", id=tarefa.id) }}" style="margin-right: 5px;">Editar</a>
+                                <form action="{{ url_for("tasks.delete_task", id=tarefa.id) }}" method="POST" style="display: inline; padding: 0; background: none; box-shadow: none;" onsubmit="return confirm("Tem certeza que deseja excluir esta tarefa?");">
+                                    <button type="submit" style="background: none; border: none; color: var(--cor-link); cursor: pointer; padding: 0;">Excluir</button>
+                                </form>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        {# Paginação #}
+        <div class="pagination" style="margin-top: 1rem; text-align: center;">
+            {% if pagination.has_prev %}
+                <a href="{{ url_for("tasks.list_tasks", page=pagination.prev_num, status=request.args.get("status")) }}" style="margin-right: 10px;">&laquo; Anterior</a>
+            {% endif %}
+            Página {{ pagination.page }} de {{ pagination.pages }}
+            {% if pagination.has_next %}
+                <a href="{{ url_for("tasks.list_tasks", page=pagination.next_num, status=request.args.get("status")) }}" style="margin-left: 10px;">Próxima &raquo;</a>
+            {% endif %}
+        </div>
+
+    {% else %}
+        <p>Nenhuma tarefa encontrada com os filtros selecionados.</p>
+    {% endif %}
+{% endblock %}
+

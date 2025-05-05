@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block title %}Tarefa: {{ task.titulo }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h2 class="mb-0">Detalhes da Tarefa: {{ task.titulo }}</h2>
+            <span class="badge bg-{{ task.status.nome | lower | replace(" ", "-") }}">{{ task.status.nome }}</span>
+        </div>
+        <div class="card-body">
+            <p><strong>Descrição:</strong> {{ task.descricao | default("N/A", true) }}</p>
+            <p><strong>Tipo:</strong> {{ task.tipo.nome }} {% if task.tipo.recorrente %}(Recorrente){% endif %}</p>
+            <p><strong>Solicitante:</strong> {{ task.solicitante.nome }}</p>
+            <p><strong>Executor:</strong> {{ task.executor.nome }}</p>
+            <p><strong>Criada em:</strong> {{ task.data_criacao.strftime("%d/%m/%Y %H:%M") }}</p>
+            <p><strong>Previsão de Conclusão:</strong> {{ task.data_previsao.strftime("%d/%m/%Y") }}</p>
+            {% if task.data_conclusao %}
+            <p><strong>Concluída em:</strong> {{ task.data_conclusao.strftime("%d/%m/%Y %H:%M") }}</p>
+            {% endif %}
+            {% if task.tarefa_origem %}
+            <p><strong>Tarefa Recorrente de:</strong> <a href="{{ url_for("tasks.view_task", id=task.tarefa_origem_id) }}">#{{ task.tarefa_origem_id }}</a></p>
+            {% endif %}
+
+            <hr>
+
+            {# Formulário para mudar status (Executor, Gestor, Admin) #}
+            {% if current_user.id == task.executor_id or current_user.nivel_acesso in ["administrador", "gestor"] %}
+            <form action="{{ url_for("tasks.update_task_status", id=task.id) }}" method="post" class="mb-3">
+                <div class="input-group">
+                    <label for="status_id" class="input-group-text">Mudar Status:</label>
+                    <select name="status_id" id="status_id" class="form-select">
+                        {% for s in task.status.query.all() %}
+                        <option value="{{ s.id }}" {% if s.id == task.status_id %}selected{% endif %}>{{ s.nome }}</option>
+                        {% endfor %}
+                    </select>
+                    <button type="submit" class="btn btn-primary">Atualizar Status</button>
+                </div>
+            </form>
+            {% endif %}
+
+            {# Botões de Ação (Admin ou Solicitante) #}
+            {% if current_user.nivel_acesso == "administrador" or current_user.id == task.solicitante_id %}
+            <div class="mt-3">
+                <a href="{{ url_for("tasks.edit_task", id=task.id) }}" class="btn btn-warning btn-sm">Editar Tarefa</a>
+                <form action="{{ url_for("tasks.delete_task", id=task.id) }}" method="post" style="display: inline;" onsubmit="return confirm("Tem certeza que deseja excluir esta tarefa?");">
+                    <button type="submit" class="btn btn-danger btn-sm">Excluir Tarefa</button>
+                </form>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    {# Quadro de Atualizações (NOVO) #}
+    <div class="card mt-4">
+        <div class="card-header">
+            <h3 class="mb-0">Histórico de Atualizações</h3>
+        </div>
+        <div class="card-body">
+            {# Formulário para adicionar nova atualização #}
+            {% if current_user.id == task.executor_id or current_user.id == task.solicitante_id or current_user.nivel_acesso in ["administrador", "gestor"] %}
+            <form action="{{ url_for("tasks.add_task_update", id=task.id) }}" method="post" class="mb-4">
+                <div class="mb-3">
+                    <label for="conteudo_atualizacao" class="form-label">Adicionar Atualização:</label>
+                    <textarea name="conteudo_atualizacao" id="conteudo_atualizacao" class="form-control" rows="3" required></textarea>
+                </div>
+                <button type="submit" class="btn btn-success">Adicionar</button>
+            </form>
+            <hr>
+            {% endif %}
+
+            {# Lista de atualizações existentes #}
+            {% if atualizacoes %}
+                {% for update in atualizacoes %}
+                <div class="alert alert-secondary mb-2">
+                    <p class="mb-1">{{ update.conteudo }}</p>
+                    <small class="text-muted">Por: {{ update.autor.nome }} em {{ update.data_criacao.strftime("%d/%m/%Y %H:%M") }}</small>
+                </div>
+                {% endfor %}
+            {% else %}
+                <p>Nenhuma atualização registrada para esta tarefa ainda.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="mt-4">
+        <a href="{{ url_for("tasks.list_tasks") }}" class="btn btn-secondary">Voltar para Lista</a>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block title %}Notificações - utili&tal{% endblock %}
+
+{% block content %}
+    <h1>Suas Notificações</h1>
+
+    {% if notificacoes %}
+        <form action="{{ url_for("notifications.mark_all_as_read") }}" method="POST" style="margin-bottom: 1rem;">
+            <button type="submit" class="button button-secondary">Marcar todas como lidas</button>
+        </form>
+
+        <ul style="list-style: none; padding: 0;">
+            {% for notificacao in notificacoes %}
+                <li style="border: 1px solid #ddd; padding: 1rem; margin-bottom: 1rem; border-radius: 4px; background-color: {{ "#fff" if notificacao.lida else "#f0f8ff" }}; display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <p style="margin: 0 0 0.5rem 0; {{ "font-weight: bold;" if not notificacao.lida }}">
+                            {% if notificacao.tarefa_id %}
+                                <a href="{{ url_for("tasks.view_task", id=notificacao.tarefa_id) }}">{{ notificacao.mensagem }}</a>
+                            {% else %}
+                                {{ notificacao.mensagem }}
+                            {% endif %}
+                        </p>
+                        <small style="color: #666;">{{ notificacao.data_criacao.strftime("%d/%m/%Y %H:%M") }}</small>
+                    </div>
+                    {% if not notificacao.lida %}
+                        <form action="{{ url_for("notifications.mark_as_read", id=notificacao.id) }}" method="POST" style="margin-left: 1rem;">
+                            <button type="submit" style="background: none; border: none; color: var(--cor-link); cursor: pointer; font-size: 0.9em;">Marcar como lida</button>
+                        </form>
+                    {% endif %}
+                </li>
+            {% endfor %}
+        </ul>
+
+        {# Paginação #}
+        <div class="pagination" style="margin-top: 1rem; text-align: center;">
+            {% if pagination.has_prev %}
+                <a href="{{ url_for("notifications.list_notifications", page=pagination.prev_num) }}" style="margin-right: 10px;">&laquo; Anterior</a>
+            {% endif %}
+            Página {{ pagination.page }} de {{ pagination.pages }}
+            {% if pagination.has_next %}
+                <a href="{{ url_for("notifications.list_notifications", page=pagination.next_num) }}" style="margin-left: 10px;">Próxima &raquo;</a>
+            {% endif %}
+        </div>
+
+    {% else %}
+        <p>Você não tem nenhuma notificação.</p>
+    {% endif %}
+{% endblock %}
+

@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block title %}Painel - utili&tal Tarefas{% endblock %}
+
+{% block content %}
+    <h1>Painel Principal</h1>
+    <p>Bem-vindo(a), {{ current_user.nome }}!</p>
+    <p>Seu nível de acesso é: <strong>{{ current_user.nivel_acesso.capitalize() }}</strong></p>
+
+    <hr>
+
+    {# Conteúdo específico por nível de acesso #}
+    {% if current_user.nivel_acesso == 'executor' %}
+        <h2>Suas Tarefas Pendentes</h2>
+        {# Aqui podemos adicionar uma query rápida ou link para tarefas #}
+        <p>Você tem X tarefas pendentes. <a href="{{ url_for('tasks.list_tasks', status='pendente') }}">Ver tarefas</a></p>
+        {# TODO: Implementar query para contar tarefas pendentes #}
+
+    {% elif current_user.nivel_acesso == 'gestor' %}
+        <h2>Visão Geral das Tarefas</h2>
+        <p>Acompanhe as tarefas criadas e atribuídas.</p>
+        <ul>
+            <li><a href="{{ url_for('tasks.create_task') }}">Criar Nova Tarefa</a></li>
+            <li><a href="{{ url_for('tasks.list_tasks') }}">Ver Todas as Tarefas</a></li>
+            <li><a href="{{ url_for('tasks.list_types') }}">Gerenciar Tipos de Tarefa</a></li>
+            {# Adicionar links para relatórios, se aplicável #}
+        </ul>
+
+    {% elif current_user.nivel_acesso == 'administrador' %}
+        <h2>Administração do Sistema</h2>
+        <p>Gerencie usuários, tipos de tarefa e configurações.</p>
+         <ul>
+            <li><a href="{{ url_for('tasks.create_task') }}">Criar Nova Tarefa</a></li>
+            <li><a href="{{ url_for('tasks.list_tasks') }}">Ver Todas as Tarefas</a></li>
+            <li><a href="{{ url_for('tasks.list_types') }}">Gerenciar Tipos de Tarefa</a></li>
+            <li><a href="{{ url_for('tasks.list_users') }}">Gerenciar Usuários</a></li>
+            {# Adicionar links para relatórios e outras configurações #}
+        </ul>
+    {% endif %}
+
+    {# Área de Notificações Recentes (a implementar) #}
+    {#
+    <div class="notifications-preview">
+        <h3>Notificações Recentes</h3>
+        <ul>
+            <li>Notificação 1...</li>
+            <li>Notificação 2...</li>
+        </ul>
+        <a href="#">Ver todas as notificações</a>
+    </div>
+    #}
+
+{% endblock %}
+

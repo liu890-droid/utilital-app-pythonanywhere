@@ -1,0 +1,13 @@
+Olá {{ user.nome }},
+
+Você tem uma nova notificação no sistema de tarefas utili&tal:
+
+{{ message }}
+
+{% if task_id %}
+Para ver a tarefa relacionada, acesse: {{ url_for("tasks.view_task", id=task_id, _external=True) }}
+{% endif %}
+
+Atenciosamente,
+Equipe utili&tal
+

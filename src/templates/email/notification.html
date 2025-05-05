@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Notificação - utili&tal Tarefas</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            color: #333;
+            line-height: 1.6;
+        }
+        .container {
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            max-width: 600px;
+            margin: 20px auto;
+            background-color: #f9f9f9;
+        }
+        .logo {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .logo img {
+            max-width: 150px;
+        }
+        a {
+            color: #dc3545; /* Vermelho utili&tal */
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">
+            {# Assumindo que o logo está acessível publicamente ou embutido #}
+            {# <img src="URL_DO_LOGO_UTILITAL" alt="utili&tal Logo"> #}
+            <h3>utili&tal Tarefas</h3>
+        </div>
+        <p>Olá {{ user.nome }},</p>
+
+        <p>Você tem uma nova notificação:</p>
+
+        <p><strong>{{ message }}</strong></p>
+
+        {% if task_id %}
+            <p>Para ver a tarefa relacionada, <a href="{{ url_for('tasks.view_task', id=task_id, _external=True) }}">clique aqui</a>.</p>
+        {% endif %}
+
+        <hr>
+        <p style="font-size: 0.9em; color: #666;">Esta é uma mensagem automática. Por favor, não responda.</p>
+    </div>
+</body>
+</html>
+

@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% set is_edit = user is defined %}
+{% block title %}{{ "Editar" if is_edit else "Criar" }} Usuário - utili&tal{% endblock %}
+
+{% block content %}
+    <h1>{{ "Editar" if is_edit else "Criar" }} Usuário</h1>
+
+    <form method="POST" action="{{ url_for("tasks.edit_user", id=user.id) if is_edit else url_for("tasks.create_user") }}">
+        <div>
+            <label for="nome">Nome:</label>
+            <input type="text" id="nome" name="nome" value="{{ user.nome if is_edit else "" }}" required>
+        </div>
+        <div>
+            <label for="email">E-mail:</label>
+            <input type="email" id="email" name="email" value="{{ user.email if is_edit else "" }}" required {{ "readonly" if is_edit }}> {# Email não pode ser editado? #}
+        </div>
+        <div>
+            <label for="senha">Senha:</label>
+            <input type="password" id="senha" name="senha" {{ "" if is_edit else "required" }}>
+            {% if is_edit %}<small>Deixe em branco para não alterar a senha.</small>{% endif %}
+        </div>
+        <div>
+            <label for="nivel_acesso">Nível de Acesso:</label>
+            <select id="nivel_acesso" name="nivel_acesso" required>
+                <option value="executor" {% if is_edit and user.nivel_acesso == "executor" %}selected{% endif %}>Executor</option>
+                <option value="gestor" {% if is_edit and user.nivel_acesso == "gestor" %}selected{% endif %}>Gestor</option>
+                <option value="administrador" {% if is_edit and user.nivel_acesso == "administrador" %}selected{% endif %}>Administrador</option>
+            </select>
+        </div>
+
+        <div>
+            <button type="submit">{{ "Salvar Alterações" if is_edit else "Criar Usuário" }}</button>
+            <a href="{{ url_for("tasks.list_users") }}" class="button button-secondary" style="margin-left: 1rem; background-color: #6c757d; color: white; padding: 0.75rem 1.5rem; text-decoration: none; border-radius: 4px;">Cancelar</a>
+        </div>
+    </form>
+{% endblock %}
+
