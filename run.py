@@ -1,6 +1,7 @@
 import os
+import click
 from dotenv import load_dotenv
-from src import create_app
+from src import create_app, db # Importar db
 from src import seed # Importar o módulo seed
 
 load_dotenv()
@@ -9,6 +10,18 @@ app = create_app()
 
 # Registrar comandos CLI
 seed.init_app(app)
+
+# --- Comando Temporário para Criar Tabelas ---
+@app.cli.command("create-tables")
+def create_tables():
+    """Cria todas as tabelas do banco de dados diretamente via SQLAlchemy."""
+    try:
+        print("INFO: Tentando criar tabelas via db.create_all()...")
+        db.create_all()
+        print("SUCCESS: db.create_all() executado.")
+    except Exception as e:
+        print(f"ERROR: Erro durante db.create_all(): {e}")
+# --- Fim do Comando Temporário ---
 
 if __name__ == "__main__":
     # Tentar usar a porta 8082 como alternativa
