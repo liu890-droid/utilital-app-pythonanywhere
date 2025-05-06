@@ -1,7 +1,10 @@
 import os
 import click
 from dotenv import load_dotenv
-from src import create_app, db # Importar db
+import sys
+import os
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
+from __init__ import create_app, db
 from src import seed # Importar o módulo seed
 
 load_dotenv()
