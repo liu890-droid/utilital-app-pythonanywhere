@@ -8,6 +8,46 @@ from .notification_utils import criar_notificacao # Importar função de notific
 
 tasks = Blueprint("tasks", __name__)
 
+
+@tasks.route("/<int:id>/visualizar", methods=["POST"])
+@login_required
+def marcar_como_em_andamento(id):
+    tarefa = Tarefa.query.get_or_404(id)
+    if tarefa.executor_id != current_user.id:
+        flash("Você não tem permissão para visualizar esta tarefa.", "danger")
+        return redirect(url_for("tasks.view_task", id=id))
+    if tarefa.status.nome == "Solicitado":
+        status_andamento = StatusTarefa.query.filter_by(nome="Em andamento").first()
+        if status_andamento:
+            tarefa.status = status_andamento
+            db.session.commit()
+            flash("Tarefa marcada como 'Em andamento'.", "success")
+    return redirect(url_for("tasks.view_task", id=id))
+
+
+@tasks.route("/<int:id>/concluir", methods=["POST"])
+@login_required
+def marcar_como_concluida(id):
+    tarefa = Tarefa.query.get_or_404(id)
+    if tarefa.executor_id != current_user.id:
+        flash("Você não pode concluir esta tarefa.", "danger")
+        return redirect(url_for("tasks.view_task", id=id))
+
+    hoje = datetime.utcnow().date()
+    prazo = tarefa.data_previsao.date()
+
+    if hoje > prazo:
+        status = StatusTarefa.query.filter_by(nome="Concluído com Atraso").first()
+    else:
+        status = StatusTarefa.query.filter_by(nome="Concluído").first()
+
+    if status:
+        tarefa.status = status
+        db.session.commit()
+        flash("Tarefa marcada como concluída.", "success")
+    return redirect(url_for("tasks.view_task", id=id))
+
+
 # --- Rotas para Tarefas ---
 
 @tasks.route("/")
@@ -105,7 +145,15 @@ def create_task():
                 db.session.rollback()
                 flash(f"Erro ao criar tarefa: {e}", "danger")
                 # Recarregar dados para o template em caso de erro
-                executores = Usuario.query.filter(Usuario.nivel_acesso.in_(["executor", "gestor"])).all() # Manter filtro por enquanto
+                
+    # Determinar executores visíveis de acordo com o nível de acesso
+    if current_user.nivel_acesso == "administrador":
+        executores = Usuario.query.all()
+    elif current_user.nivel_acesso == "gestor":
+        executores = Usuario.query.filter_by(nivel_acesso="executor").all()
+    else:
+        executores = []
+
                 tipos_tarefa = TipoTarefa.query.all()
                 return render_template("tasks/create_edit.html", executores=executores, tipos_tarefa=tipos_tarefa, titulo=titulo, descricao=descricao, executor_id=executor_id, tipo_id=tipo_id)
                 flash(f"Erro ao criar tarefa: {e}", "danger")
@@ -118,7 +166,7 @@ def create_task():
 
 @tasks.route("/<int:id>")
 @login_required
-def view_task(id):
+def def view_task(id):
     tarefa = Tarefa.query.get_or_404(id)
     # Verificar permissão (Admin, Solicitante ou Executor)
     if not (current_user.nivel_acesso == "administrador" or \
