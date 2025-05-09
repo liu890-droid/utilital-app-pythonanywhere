@@ -10,16 +10,6 @@
             <span class="badge bg-{{ task.status.nome | lower | replace(" ", "-") }}">{{ task.status.nome }}</span>
         </div>
         <div class="card-body">
-            {% if task.status.nome == "Solicitado" and current_user.id == task.executor_id %}
-            <form method="POST" action="{{ url_for('tasks.marcar_como_em_andamento', id=task.id) }}" class="mt-3">
-                <button type="submit" class="btn btn-primary">Tarefa Visualizada (Iniciar)</button>
-            </form>
-            {% elif task.status.nome == "Em andamento" and current_user.id == task.executor_id %}
-            <form method="POST" action="{{ url_for('tasks.marcar_como_concluida', id=task.id) }}" class="mt-3">
-                <button type="submit" class="btn btn-success">Concluir Tarefa</button>
-            </form>
-            {% endif %}
-
             <p><strong>Descrição:</strong> {{ task.descricao | default("N/A", true) }}</p>
             <p><strong>Tipo:</strong> {{ task.tipo.nome }} {% if task.tipo.recorrente %}(Recorrente){% endif %}</p>
             <p><strong>Solicitante:</strong> {{ task.solicitante.nome }}</p>
@@ -39,21 +29,15 @@
             {% if current_user.id == task.executor_id or current_user.nivel_acesso in ["administrador", "gestor"] %}
             <form action="{{ url_for("tasks.update_task_status", id=task.id) }}" method="post" class="mb-3">
                 <div class="input-group">
-                    <label for="status_id" class="input-group-text">
-{% if current_user.nivel_acesso in ["administrador", "gestor"] %}
-<div class="mt-3">
-    <form method="POST" action="{{ url_for('tasks.update_task_status', id=task.id) }}">
-        <label for="status_id">Mudar Status:</label>
-        <select name="status_id" id="status_id" class="form-select">
-            {% for s in task.status.query.all() %}
-            <option value="{{ s.id }}" {% if s.id == task.status_id %}selected{% endif %}>{{ s.nome }}</option>
-            {% endfor %}
-        </select>
-        <button type="submit" class="btn btn-primary">Atualizar Status</button>
-    </form>
-</div>
-{% endif %}
-
+                    <label for="status_id" class="input-group-text">Mudar Status:</label>
+                    <select name="status_id" id="status_id" class="form-select">
+                        {% for s in task.status.query.all() %}
+                        <option value="{{ s.id }}" {% if s.id == task.status_id %}selected{% endif %}>{{ s.nome }}</option>
+                        {% endfor %}
+                    </select>
+                    <button type="submit" class="btn btn-primary">Atualizar Status</button>
+                </div>
+            </form>
             {% endif %}
 
             {# Botões de Ação (Admin ou Solicitante) #}
@@ -74,16 +58,6 @@
             <h3 class="mb-0">Histórico de Atualizações</h3>
         </div>
         <div class="card-body">
-            {% if task.status.nome == "Solicitado" and current_user.id == task.executor_id %}
-            <form method="POST" action="{{ url_for('tasks.marcar_como_em_andamento', id=task.id) }}" class="mt-3">
-                <button type="submit" class="btn btn-primary">Tarefa Visualizada (Iniciar)</button>
-            </form>
-            {% elif task.status.nome == "Em andamento" and current_user.id == task.executor_id %}
-            <form method="POST" action="{{ url_for('tasks.marcar_como_concluida', id=task.id) }}" class="mt-3">
-                <button type="submit" class="btn btn-success">Concluir Tarefa</button>
-            </form>
-            {% endif %}
-
             {# Formulário para adicionar nova atualização #}
             {% if current_user.id == task.executor_id or current_user.id == task.solicitante_id or current_user.nivel_acesso in ["administrador", "gestor"] %}
             <form action="{{ url_for("tasks.add_task_update", id=task.id) }}" method="post" class="mb-4">

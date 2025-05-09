@@ -117,7 +117,7 @@ def create_task():
                     # Calcular data_previsao automaticamente
                     data_criacao = datetime.utcnow()
                     # Adicionar 1 segundo para garantir que a previsão seja sempre no futuro, mesmo com prazo 0
-                    data_previsao = data_criacao + timedelta(days=tipo_tarefa.prazo_dias, seconds=1) 
+                    data_previsao = data_criacao + timedelta(days=tipo_tarefa.prazo_dias, seconds=1)
 
                     nova_tarefa = Tarefa(
                         titulo=titulo,
@@ -145,15 +145,7 @@ def create_task():
                 db.session.rollback()
                 flash(f"Erro ao criar tarefa: {e}", "danger")
                 # Recarregar dados para o template em caso de erro
-                
-    # Determinar executores visíveis de acordo com o nível de acesso
-    if current_user.nivel_acesso == "administrador":
-        executores = Usuario.query.all()
-    elif current_user.nivel_acesso == "gestor":
-        executores = Usuario.query.filter_by(nivel_acesso="executor").all()
-    else:
-        executores = []
-
+                executores = Usuario.query.filter(Usuario.nivel_acesso.in_(["executor", "gestor"])).all() # Manter filtro por enquanto
                 tipos_tarefa = TipoTarefa.query.all()
                 return render_template("tasks/create_edit.html", executores=executores, tipos_tarefa=tipos_tarefa, titulo=titulo, descricao=descricao, executor_id=executor_id, tipo_id=tipo_id)
                 flash(f"Erro ao criar tarefa: {e}", "danger")
@@ -166,17 +158,17 @@ def create_task():
 
 @tasks.route("/<int:id>")
 @login_required
-def def view_task(id):
+def view_task(id):
     tarefa = Tarefa.query.get_or_404(id)
     # Verificar permissão (Admin, Solicitante ou Executor)
     if not (current_user.nivel_acesso == "administrador" or \
             tarefa.solicitante_id == current_user.id or \
             tarefa.executor_id == current_user.id):
         abort(403)
-        
+
     # Buscar atualizações da tarefa
     atualizacoes = tarefa.atualizacoes.order_by(AtualizacaoTarefa.data_criacao.desc()).all()
-    
+
     return render_template("tasks/view.html", task=tarefa, atualizacoes=atualizacoes)
 
 @tasks.route("/<int:id>/edit", methods=["GET", "POST"])
@@ -260,7 +252,7 @@ def delete_task(id):
         # Excluir notificações e atualizações associadas primeiro
         Notificacao.query.filter_by(tarefa_id=id).delete()
         AtualizacaoTarefa.query.filter_by(tarefa_id=id).delete()
-        
+
         db.session.delete(tarefa)
         db.session.commit()
         flash("Tarefa excluída com sucesso!", "success")
@@ -287,7 +279,7 @@ def update_task_status(id):
     else:
         status_anterior = tarefa.status.nome
         tarefa.status_id = novo_status_id
-        
+
         # Marcar data de conclusão se o status for "Concluído" ou "Concluído com Atraso"
         if novo_status.nome in ["Concluído", "Concluído com Atraso"]:
             tarefa.data_conclusao = datetime.utcnow()
@@ -303,7 +295,7 @@ def update_task_status(id):
         try:
             db.session.commit()
             flash(f"Status da tarefa atualizado para ", "success")
-            
+
             # Notificar Solicitante sobre mudança de status
             if tarefa.solicitante_id != current_user.id:
                 criar_notificacao(
@@ -311,7 +303,7 @@ def update_task_status(id):
                     mensagem=f"O status da tarefa ",
                     tarefa_id=tarefa.id
                 )
-            
+
             # Lógica de recorrência (após commit)
             if tarefa.tipo.recorrente and novo_status.nome in ["Concluído", "Concluído com Atraso"]:
                 try:
@@ -319,7 +311,7 @@ def update_task_status(id):
                     nova_data_criacao = tarefa.data_previsao + timedelta(days=1)
                     # Calcular nova data de previsão
                     nova_data_previsao = nova_data_criacao + timedelta(days=tarefa.tipo.prazo_dias)
-                    
+
                     nova_tarefa_recorrente = Tarefa(
                         titulo=tarefa.titulo,
                         descricao=tarefa.descricao,
@@ -344,7 +336,7 @@ def update_task_status(id):
                     db.session.rollback()
                     print(f"Erro ao criar tarefa recorrente: {e_recor}")
                     flash(f"Status atualizado, mas erro ao criar tarefa recorrente: {e_recor}", "warning")
-                    
+
         except Exception as e:
             db.session.rollback()
             flash(f"Erro ao atualizar status: {e}", "danger")
@@ -376,7 +368,7 @@ def add_task_update(id):
             db.session.add(nova_atualizacao)
             db.session.commit()
             flash("Atualização adicionada com sucesso!", "success")
-            
+
             # Notificar o outro usuário envolvido (se não for o próprio)
             notificar_usuario_id = None
             if tarefa.solicitante_id == current_user.id and tarefa.executor_id != current_user.id:
@@ -384,7 +376,7 @@ def add_task_update(id):
             elif tarefa.executor_id == current_user.id and tarefa.solicitante_id != current_user.id:
                 notificar_usuario_id = tarefa.solicitante_id
             # Adicionar lógica para notificar gestor/admin se necessário?
-                
+
             if notificar_usuario_id:
                  criar_notificacao(
                     usuario_id=notificar_usuario_id,
@@ -392,7 +384,7 @@ def add_task_update(id):
                     tarefa_id=tarefa.id,
                     atualizacao_id=nova_atualizacao.id
                  )
-                 
+
         except Exception as e:
             db.session.rollback()
             flash(f"Erro ao adicionar atualização: {e}", "danger")
@@ -415,7 +407,7 @@ def list_types():
 def create_type():
     # if current_user.nivel_acesso not in ["administrador", "gestor"]:
     #     abort(403)
-        
+
     if request.method == "POST":
         nome = request.form.get("nome")
         prazo_dias = request.form.get("prazo_dias", type=int)
@@ -540,13 +532,13 @@ def delete_user(id):
         # Excluir notificações e atualizações do usuário
         Notificacao.query.filter_by(usuario_id=id).delete()
         AtualizacaoTarefa.query.filter_by(autor_id=id).delete()
-        
+
         # O que fazer com tarefas onde ele é executor ou solicitante?
         # Opção 1: Impedir exclusão (mais seguro inicialmente)
         if Tarefa.query.filter((Tarefa.executor_id == id) | (Tarefa.solicitante_id == id)).first():
              flash("Não é possível excluir o usuário pois ele possui tarefas associadas (como executor ou solicitante). Reatribua ou exclua as tarefas primeiro.", "danger")
              return redirect(url_for("tasks.list_users"))
-             
+
         # Opção 2: Reatribuir (complexo)
         # Opção 3: Excluir tarefas (perda de dados)
         # Opção 4: Definir como NULL (requer alteração no model)
@@ -622,4 +614,3 @@ def delete_type(id):
         flash(f"Erro ao excluir tipo de tarefa: {e}", "danger")
 
     return redirect(url_for("tasks.list_types"))
-
